@@ -25,10 +25,29 @@ const client = new MongoClient(uri, {
     }
 });
 
+const volunteerPostCollection = client.db('volunteerVenue').collection('postVolunteer')
+
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
         // await client.connect();
+
+        // post volunteer:
+        app.post('/volunteer', async (req, res) => {
+            const reqData = req.body;
+            const result = await volunteerPostCollection.insertOne(reqData)
+            res.send(result)
+        })
+
+
+
+
+
+
+
+
+
+
         // Send a ping to confirm a successful connection
         // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
