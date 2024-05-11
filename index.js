@@ -32,6 +32,35 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         // await client.connect();
 
+
+        app.get('/volunteer', async (req, res) => {
+            const result = await volunteerPostCollection.find()
+                .sort({ deadline: 1 })
+                .limit(6)
+                .toArray()
+            res.send(result)
+        })
+
+        
+
+        // get all data:
+        app.get('/all-volunteer', async (req, res) => {
+            const search = req.query.search;
+            let query = {
+                title: { $regex: search,$options:'i' }  
+            }
+
+            const result = await volunteerPostCollection.find(query).toArray()
+            res.send(result)
+        })
+
+
+        // get single data:
+        app.get('all-volunteer/:id', async (req, res) => {
+            
+        })
+
+
         // post volunteer:
         app.post('/volunteer', async (req, res) => {
             const reqData = req.body;
