@@ -111,6 +111,18 @@ async function run() {
 
         // ------------------------------- beAVolunteerCollection ------------------------------------
 
+        app.get('/beVolunteer', async (req, res) => {
+            const result = await beAVolunteerCollection.find().toArray()
+            res.send(result)
+        })
+
+        app.get('/beVolunteer/:id',async(req,res)=>{
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await beAVolunteerCollection.find(query).toArray()
+            res.send(result)
+        })
+
 
         app.post('/beVolunteer', async (req, res) => {
             const reqData = req.body;
