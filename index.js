@@ -109,10 +109,14 @@ async function run() {
         })
 
 
-        // -------------------------------------------------------------------
+        // ------------------------------- beAVolunteerCollection ------------------------------------
 
 
-
+        app.post('/beVolunteer', async (req, res) => {
+            const reqData = req.body;
+            const result = await beAVolunteerCollection.insertOne(reqData)
+            res.send(result)
+        })
 
 
 
