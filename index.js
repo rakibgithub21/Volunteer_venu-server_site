@@ -116,10 +116,17 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/beVolunteer/:id',async(req,res)=>{
+        app.get('/beVolunteer/:email',async(req,res)=>{
+            const email = req.params.email;
+            const query = {'volunteerDetails.email' : email}
+            const result = await beAVolunteerCollection.find(query).toArray()
+            res.send(result)
+        })
+
+        app.delete('/beVolunteer/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
-            const result = await beAVolunteerCollection.find(query).toArray()
+            const result = await beAVolunteerCollection.deleteOne(query)
             res.send(result)
         })
 
