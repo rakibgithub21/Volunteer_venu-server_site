@@ -41,13 +41,13 @@ async function run() {
             res.send(result)
         })
 
-        
+
 
         // get all data:
         app.get('/all-volunteer', async (req, res) => {
             const search = req.query.search;
             let query = {
-                title: { $regex: search,$options:'i' }  
+                title: { $regex: search, $options: 'i' }
             }
 
             const result = await volunteerPostCollection.find(query).toArray()
@@ -56,6 +56,12 @@ async function run() {
 
 
         // get single data:
+
+        app.get('/all', async (req, res) => {
+            const result = await volunteerPostCollection.find().toArray()
+            res.send(result)
+        })
+
         app.get('/all/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
@@ -63,15 +69,33 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/all', async (req, res) => {
-            const result = await volunteerPostCollection.find().toArray()
-            res.send(result)
-        })
 
         app.get('/alls/:email', async (req, res) => {
             const email = req.params.email;
             const query = { 'postBy.email': email };
             const result = await volunteerPostCollection.find(query).toArray()
+            res.send(result)
+        })
+
+        app.delete('/all/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await volunteerPostCollection.deleteOne(query)
+            res.send(result)
+
+        })
+
+        app.put('/all/:id', async (req, res) => {
+            const id = req.params.id;
+            const reqBody = req.body;
+            const query = { _id: new ObjectId(id) }
+            const options = { upsert: true }
+            const updateDoc = {
+                $set: {
+                    ...reqBody,
+                },
+            }
+            const result = await volunteerPostCollection.updateOne(query, updateDoc, options)
             res.send(result)
         })
 
