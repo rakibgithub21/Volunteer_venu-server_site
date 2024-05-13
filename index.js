@@ -31,6 +31,29 @@ app.use(cookieParser())
 
 
 
+// verify jwt middleware:
+const verifyToken = (req, res, next) => {
+    const token = req.cookies?.token;
+    if (!token) {
+        return res.status(401).send({message:'unauthorized access'})
+    }
+    if (token) {
+        jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+            if (err) {
+                // console.log(err,'err');
+                return res.status(401).send({ message: 'unauthorized access' })
+            }
+            // console.log(decoded, 'decoded');
+            req.user = decoded
+
+            next()
+
+        })
+    }
+
+}
+
+
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.vq4rqer.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -149,8 +172,13 @@ async function run() {
         })
 
 
-        app.get('/alls/:email', async (req, res) => {
+        app.get('/alls/:email', verifyToken, async (req, res) => {
+            const tokenEmail = req.user.email
             const email = req.params.email;
+            // console.log('from decoded',tokenEmail,'from query',email);
+            if (tokenEmail !== email) {
+                return res.status(403).send({success:'Forbidden'})
+            }
             const query = { 'postBy.email': email };
             const result = await volunteerPostCollection.find(query).toArray()
             res.send(result)
