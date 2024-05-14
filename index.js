@@ -283,6 +283,12 @@ async function run() {
         });
 
 
+        app.get('/feedbacks', async (req, res) => {
+            const result = await usersFeedbackCollection.find().sort({ date: 1 }).toArray()
+            res.send(result)
+        })
+
+
 
 
 
