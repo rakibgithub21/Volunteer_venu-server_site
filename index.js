@@ -15,6 +15,8 @@ const corsOptions = {
     origin: [
         'http://localhost:5173',
         'http://localhost:5174',
+        'https://volunteer-venu-a11.web.app',
+        'https://volunteer-venu-a11.firebaseapp.com'
     ],
     credentials: true,
     optionSuccessStatus: 200,
@@ -35,7 +37,7 @@ app.use(cookieParser())
 const verifyToken = (req, res, next) => {
     const token = req.cookies?.token;
     if (!token) {
-        return res.status(401).send({message:'unauthorized access'})
+        return res.status(401).send({ message: 'unauthorized access' })
     }
     if (token) {
         jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
@@ -68,6 +70,15 @@ const client = new MongoClient(uri, {
 
 const volunteerPostCollection = client.db('volunteerVenue').collection('postVolunteer')
 const beAVolunteerCollection = client.db('volunteerVenue').collection('beVolunteer')
+const usersFeedbackCollection = client.db('volunteerVenue').collection('usersFeedback')
+
+
+const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production" ? true : false,
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+};
+
 
 async function run() {
     try {
@@ -85,11 +96,7 @@ async function run() {
                 expiresIn: '15d'
             })
             res
-                .cookie('token', token, {
-                    httpOnly: true,
-                    secure: process.env.NODE_ENV === 'production',
-                    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
-                })
+                .cookie('token', token, cookieOptions )
                 .send({ success: true })
         })
 
@@ -97,12 +104,7 @@ async function run() {
 
         app.get('/logout', (req, res) => {
             res
-                .clearCookie('token', {
-                    httpOnly: true,
-                    secure: process.env.NODE_ENV === 'production',
-                    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-                    maxAge:0
-                })
+                .clearCookie('token', {...cookieOptions,maxAge:0   })
                 .send({ success: true })
         })
 
@@ -143,7 +145,7 @@ async function run() {
         })
 
 
-        // get single data:
+        // get all data:
 
         app.get('/all', async (req, res) => {
             const result = await volunteerPostCollection.find().toArray()
@@ -152,6 +154,14 @@ async function run() {
 
         app.get('/all/:id', async (req, res) => {
             const id = req.params.id;
+            // const tokenEmail = req.user.email;
+            // const emailr = req.query.email;
+            // console.log(email);
+
+            // if (tokenEmail !== email) {
+            //     return res.status(403).send({ success: 'Forbidden' })
+            // }
+
             const query = { _id: new ObjectId(id) }
             const result = await volunteerPostCollection.findOne(query)
             res.send(result)
@@ -171,18 +181,21 @@ async function run() {
             res.json(result)
         })
 
-
+        // first implement jwt here:
         app.get('/alls/:email', verifyToken, async (req, res) => {
             const tokenEmail = req.user.email
             const email = req.params.email;
             // console.log('from decoded',tokenEmail,'from query',email);
             if (tokenEmail !== email) {
-                return res.status(403).send({success:'Forbidden'})
+                return res.status(403).send({ success: 'Forbidden' })
             }
             const query = { 'postBy.email': email };
             const result = await volunteerPostCollection.find(query).toArray()
             res.send(result)
         })
+        // --------------------------------------------
+
+
 
         app.delete('/all/:id', async (req, res) => {
             const id = req.params.id
@@ -222,12 +235,22 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/beVolunteer/:email', async (req, res) => {
+
+        // second implement jwt here:
+
+        app.get('/beVolunteer/:email', verifyToken, async (req, res) => {
+            const tokenEmail = req.user.email
+            // console.log(tokenEmail);
             const email = req.params.email;
+            if (tokenEmail !== email) {
+                return res.status(403).send({ success: 'Forbidden' })
+            }
             const query = { 'volunteerDetails.email': email }
             const result = await beAVolunteerCollection.find(query).toArray()
             res.send(result)
         })
+
+        // -----------------------
 
         app.delete('/beVolunteer/:id', async (req, res) => {
             const id = req.params.id;
@@ -244,6 +267,20 @@ async function run() {
         })
 
 
+        // ------------------------
+        app.post('/feedback', async (req, res) => {
+            const reqBody = req.body;
+            const result = await usersFeedbackCollection.insertOne(reqBody)
+            res.send(result)
+        })
+
+        app.get('/feedback', async (req, res) => {
+
+            const result = await usersFeedbackCollection.find({ ratings: { $gte: 4 }
+            }).limit(6).toArray();
+
+            res.send(result);
+        });
 
 
 
