@@ -34,26 +34,26 @@ app.use(cookieParser())
 
 
 // verify jwt middleware:
-// const verifyToken = (req, res, next) => {
-//     const token = req.cookies?.token;
-//     if (!token) {
-//         return res.status(401).send({ message: 'unauthorized access' })
-//     }
-//     if (token) {
-//         jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-//             if (err) {
-//                 // console.log(err,'err');
-//                 return res.status(401).send({ message: 'unauthorized access' })
-//             }
-//             // console.log(decoded, 'decoded');
-//             req.user = decoded
+const verifyToken = (req, res, next) => {
+    const token = req.cookies?.token;
+    if (!token) {
+        return res.status(401).send({ message: 'unauthorized access' })
+    }
+    if (token) {
+        jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+            if (err) {
+                // console.log(err,'err');
+                return res.status(401).send({ message: 'unauthorized access' })
+            }
+            // console.log(decoded, 'decoded');
+            req.user = decoded
 
-//             next()
+            next()
 
-//         })
-//     }
+        })
+    }
 
-// }
+}
 
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -89,16 +89,16 @@ async function run() {
 
         // jwt token generate:
 
-        // app.post('/jwt', async (req, res) => {
-        //     const user = req.body;
-        //     console.log(user);
-        //     const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        //         expiresIn: '15d'
-        //     })
-        //     res
-        //         .cookie('token', token, cookieOptions )
-        //         .send({ success: true })
-        // })
+        app.post('/jwt', async (req, res) => {
+            const user = req.body;
+            console.log(user);
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+                expiresIn: '15d'
+            })
+            res
+                .cookie('token', token, cookieOptions )
+                .send({ success: true })
+        })
 
         // // clear token on logout
 
@@ -107,7 +107,13 @@ async function run() {
         //         .clearCookie('token', {...cookieOptions,maxAge:0   })
         //         .send({ success: true })
         // })
-
+        app.post("/logout", async (req, res) => {
+            const user = req.body;
+            console.log("logging out", user);
+            res
+                .clearCookie("token", { ...cookieOptions, maxAge: 0 })
+                .send({ success: true });
+        });
 
 
 
@@ -182,13 +188,13 @@ async function run() {
         })
 
         // first implement jwt here:  verifyToken,
-        app.get('/alls/:email', async (req, res) => {
-            // const tokenEmail = req.user.email
+        app.get('/alls/:email', verifyToken, async (req, res) => {
+            const tokenEmail = req.user.email
             const email = req.params.email;
             // console.log('from decoded',tokenEmail,'from query',email);
-            // if (tokenEmail !== email) {
-            //     return res.status(403).send({ success: 'Forbidden' })
-            // }
+            if (tokenEmail !== email) {
+                return res.status(403).send({ success: 'Forbidden' })
+            }
             const query = { 'postBy.email': email };
             const result = await volunteerPostCollection.find(query).toArray()
             res.send(result)
@@ -238,13 +244,13 @@ async function run() {
 
         // second implement jwt here:  verifyToken,
 
-        app.get('/beVolunteer/:email',  async (req, res) => {
-            // const tokenEmail = req.user.email
+        app.get('/beVolunteer/:email', verifyToken,  async (req, res) => {
+            const tokenEmail = req.user.email
             // console.log(tokenEmail);
             const email = req.params.email;
-            // if (tokenEmail !== email) {
-            //     return res.status(403).send({ success: 'Forbidden' })
-            // }
+            if (tokenEmail !== email) {
+                return res.status(403).send({ success: 'Forbidden' })
+            }
             const query = { 'volunteerDetails.email': email }
             const result = await beAVolunteerCollection.find(query).toArray()
             res.send(result)
