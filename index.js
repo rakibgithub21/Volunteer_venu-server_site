@@ -96,7 +96,7 @@ async function run() {
                 expiresIn: '15d'
             })
             res
-                .cookie('token', token, cookieOptions )
+                .cookie('token', token, cookieOptions)
                 .send({ success: true })
         })
 
@@ -244,7 +244,7 @@ async function run() {
 
         // second implement jwt here:  verifyToken,
 
-        app.get('/beVolunteer/:email', verifyToken,  async (req, res) => {
+        app.get('/beVolunteer/:email', verifyToken, async (req, res) => {
             const tokenEmail = req.user.email
             // console.log(tokenEmail);
             const email = req.params.email;
@@ -282,7 +282,8 @@ async function run() {
 
         app.get('/feedback', async (req, res) => {
 
-            const result = await usersFeedbackCollection.find({ ratings: { $gte: 4 }
+            const result = await usersFeedbackCollection.find({
+                ratings: { $gte: 4 }
             }).limit(6).toArray();
 
             res.send(result);
@@ -292,6 +293,16 @@ async function run() {
         app.get('/feedbacks', async (req, res) => {
             const result = await usersFeedbackCollection.find().sort({ date: 1 }).toArray()
             res.send(result)
+        })
+
+        app.get('/productsCount/:email', async (req, res) => {
+            const email = req.params.email
+            const query = { 'volunteerDetails.email': email }
+            console.log(query);
+            const count = await beAVolunteerCollection.countDocuments(query);
+            console.log({ count });
+            res.send({ count })
+
         })
 
 
